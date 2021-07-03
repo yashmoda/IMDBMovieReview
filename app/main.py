@@ -11,47 +11,51 @@ app.db = Database('sqlite:////{}/movies.db'.format(os.getcwd()))
 
 
 async def load_genres(genre):
-    genre_query = """SELECT COUNT(*) FROM GENRE"""
-    genre_count = await app.db.fetch_one(genre_query)
-    if genre_count[0] == 0:
-        res = []
-        for g in genre:
+    genre_query = """SELECT GENRE FROM GENRE"""
+    genre_res = await app.db.fetch_all(genre_query)
+    genre_res = [g[0] for g in genre_res]
+    if len(genre) == 0:
+        return
+    res = []
+    for g in genre:
+        if g not in genre_res:
             temp_json = {'genre': g}
             res.append(temp_json)
-        genre_query = """INSERT INTO GENRE
-                                (GENRE) 
-                                VALUES 
-                                (:genre)
-                                """
-        await app.db.execute_many(genre_query, res)
+    genre_query = """INSERT INTO GENRE
+                            (GENRE) 
+                            VALUES 
+                            (:genre)
+                            """
+    # print(res)
+    await app.db.execute_many(genre_query, res)
 
 
 async def match_movie_genre(movie_name):
-    movie_genre_query = """SELECT COUNT(*) FROM MOVIE_GENRE"""
-    count = await app.db.fetch_one(movie_genre_query)
     genre_dict = {}
     movie_genre = []
-    if count[0] == 0:
-        genre_query = "SELECT ID, GENRE FROM GENRE"
-        genre_res = await app.db.fetch_all(genre_query)
-        for genre in genre_res:
-            genre_dict[genre[1]] = genre[0]
-        for key, value in movie_name.items():
-            movie_id_query = """SELECT ID FROM MOVIES WHERE NAME = :name"""
-            movie_id_res = await app.db.fetch_one(movie_id_query, values={"name": key})
-            movie_id = movie_id_res[0]
-
-            for val in value:
-                temp_json = {
-                    'movie_id': movie_id,
-                    'genre_id': genre_dict.get(val)
-                }
-                movie_genre.append(temp_json)
-            insert_query = """INSERT INTO MOVIE_GENRE
-                                (MOVIE_ID, GENRE_ID)
-                                VALUES
-                                (:movie_id, :genre_id)"""
-            await app.db.execute_many(insert_query, movie_genre)
+    genre_query = "SELECT ID, GENRE FROM GENRE"
+    genre_res = await app.db.fetch_all(genre_query)
+    for genre in genre_res:
+        genre_dict[genre[1]] = genre[0]
+    print(movie_name)
+    for key, value in movie_name.items():
+        movie_genre_query = """SELECT M.ID FROM MOVIES M
+                                WHERE M.NAME = :name
+                                """
+        count = await app.db.fetch_one(movie_genre_query, values={"name": key})
+        movie_id = count[0]
+        for val in value:
+            temp_json = {
+                'movie_id': movie_id,
+                'genre_id': genre_dict.get(val)
+            }
+            movie_genre.append(temp_json)
+        insert_query = """INSERT INTO MOVIE_GENRE
+                            (MOVIE_ID, GENRE_ID)
+                            VALUES
+                            (:movie_id, :genre_id)"""
+        await app.db.execute_many(insert_query, movie_genre)
+        # print(movie_genre)
 
 
 async def load_movies():
@@ -80,12 +84,7 @@ async def load_movies():
                 movie_name[i["name"].strip()].append(g)
                 genre.add(g)
         if movie_count[0] == 0:
-            movie_query = """INSERT INTO MOVIES
-                            (NAME, DIRECTOR, POPULARITY, IMDB_SCORE) 
-                            VALUES 
-                            (:name, :director, :popularity, :imdb_score)
-                            """
-            await app.db.execute_many(movie_query, movie_list)
+            await insert_movie(movie_list)
 
         await load_genres(genre)
         await match_movie_genre(movie_name)
@@ -135,7 +134,7 @@ async def connect_to_db(*args, **kwargs):
             )"""
     await app.db.execute(query=query)
     print("!!!Created User Table!!!")
-    await load_movies()
+    # await load_movies()
 
 
 @app.listener('after_server_stop')
@@ -176,10 +175,69 @@ async def get_reviews(request):
     return response.json(response_val)
 
 
-async def is_admin(username):
-    query = """SELECT IS_ADMIN FROM USERS WHERE USERNAME = {}""".format(username)
-    admin = await app.db.fetch_one(query)
-    return True if admin[0] == 'Y' else False
+@app.route("/add/", methods=["POST"])
+async def add_movie(request):
+    try:
+        username = request.form.get("username")
+        if await is_admin(username):
+            name = request.form.get("name")
+            director = request.form.get("director")
+            imdb_score = request.form.get("imdb_score")
+            popularity = request.form.get("popularity")
+            genre = request.form.get("genre").split(",")
+            genre = set([g.strip() for g in genre])
+            movie_dict = {"name": name,
+                          "director": director,
+                          "imdb_score": imdb_score,
+                          "popularity": popularity}
+            await load_genres(genre)
+            await insert_movie(movie_dict)
+            await match_movie_genre({name: genre})
+            return response.text("The movie has been successfully added.")
+        else:
+            return response.text("You are not the admin. Only admin can add a movie!!")
+    except Exception as e:
+        print(str(e))
+        return response.text(str(e))
 
+@app.route("/add_user/", methods=["POST"])
+async def add_user(request):
+    try:
+        username = request.form.get("username")
+        is_admin = request.form.get("is_admin")
+        user = {"username": username.lower(),
+                "is_admin": is_admin.upper()}
+        await insert_user(user)
+        return response.text("The user has been added successfully")
+    except Exception as e:
+        return response.text(str(e))
+
+
+async def is_admin(username):
+    query = """SELECT IS_ADMIN FROM USERS WHERE USERNAME = :name"""
+    admin = await app.db.fetch_one(query, values={"name": username})
+    return True if admin is not None and admin[0].upper() == 'Y' else False
+
+
+async def insert_user(user):
+    query = """
+                INSERT INTO USERS
+                (USERNAME, IS_ADMIN)
+                VALUES
+                (:username, :is_admin)
+            """
+    await app.db.execute(query, values=user)
+    print("Inserted!!")
+    return
+
+
+async def insert_movie(movie):
+    movie_query = """INSERT INTO MOVIES
+                    (NAME, DIRECTOR, POPULARITY, IMDB_SCORE) 
+                    VALUES 
+                    (:name, :director, :popularity, :imdb_score)
+                    """
+    await app.db.execute(movie_query, movie)
+    # print(movie)
 
 app.run(host="0.0.0.0", port=8000, debug=True)

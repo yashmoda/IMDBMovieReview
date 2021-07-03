@@ -10,36 +10,7 @@ app = Sanic("IMDB Movie Reviews")
 app.db = Database('sqlite:////{}/movies.db'.format(os.getcwd()))
 
 
-async def load_movies():
-    query = """SELECT COUNT(*) FROM MOVIES"""
-    movie_count = await app.db.fetch_one(query)
-    genre = set()
-    movie_list = []
-    file = open('imdb.json', 'r')
-    data = json.load(file)
-    for i in data:
-        temp_json = {
-            'name': i['name'].strip(),
-            'director': i['director'].strip(),
-            'popularity': i['99popularity'],
-            'imdb_score': i['imdb_score']
-        }
-        movie_list.append(temp_json)
-
-        for j in i['genre']:
-            g = j.strip()
-            genre.add(g)
-    if movie_count[0] == 0:
-        movie_query = """INSERT INTO MOVIES
-                        (NAME, DIRECTOR, POPULARITY, IMDB_SCORE) 
-                        VALUES 
-                        (:name, :director, :popularity, :imdb_score)
-                        """
-        await app.db.execute_many(movie_query, movie_list)
-        query = """SELECT COUNT(*) FROM MOVIES"""
-
-        movie_count = await app.db.fetch_one(query)
-        print(movie_count)
+async def load_genres(genre):
     genre_query = """SELECT COUNT(*) FROM GENRE"""
     genre_count = await app.db.fetch_one(genre_query)
     if genre_count[0] == 0:
@@ -48,14 +19,79 @@ async def load_movies():
             temp_json = {'genre': g}
             res.append(temp_json)
         genre_query = """INSERT INTO GENRE
-                        (GENRE) 
-                        VALUES 
-                        (:genre)
-                        """
+                                (GENRE) 
+                                VALUES 
+                                (:genre)
+                                """
         await app.db.execute_many(genre_query, res)
-        genre_query = """SELECT COUNT(*) FROM GENRE"""
-        genre_count = await app.db.fetch_one(genre_query)
-        print(genre_count)
+
+
+async def match_movie_genre(movie_name):
+    movie_genre_query = """SELECT COUNT(*) FROM MOVIE_GENRE"""
+    count = await app.db.fetch_one(movie_genre_query)
+    genre_dict = {}
+    movie_genre = []
+    if count[0] == 0:
+        genre_query = "SELECT ID, GENRE FROM GENRE"
+        genre_res = await app.db.fetch_all(genre_query)
+        for genre in genre_res:
+            genre_dict[genre[1]] = genre[0]
+        for key, value in movie_name.items():
+            movie_id_query = """SELECT ID FROM MOVIES WHERE NAME = :name"""
+            movie_id_res = await app.db.fetch_one(movie_id_query, values={"name": key})
+            movie_id = movie_id_res[0]
+
+            for val in value:
+                temp_json = {
+                    'movie_id': movie_id,
+                    'genre_id': genre_dict.get(val)
+                }
+                movie_genre.append(temp_json)
+            insert_query = """INSERT INTO MOVIE_GENRE
+                                (MOVIE_ID, GENRE_ID)
+                                VALUES
+                                (:movie_id, :genre_id)"""
+            await app.db.execute_many(insert_query, movie_genre)
+
+
+async def load_movies():
+    try:
+        query = """SELECT COUNT(*) FROM MOVIES"""
+        movie_count = await app.db.fetch_one(query)
+        genre = set()
+        movie_list = []
+        file = open('imdb.json', 'r')
+        data = json.load(file)
+        movie_name = {}
+        for i in data:
+            temp_json = {
+                'name': i['name'].strip(),
+                'director': i['director'].strip(),
+                'popularity': i['99popularity'],
+                'imdb_score': i['imdb_score']
+            }
+            if i["name"].strip() not in movie_name:
+                movie_name[i["name"].strip()] = []
+
+            movie_list.append(temp_json)
+
+            for j in i['genre']:
+                g = j.strip()
+                movie_name[i["name"].strip()].append(g)
+                genre.add(g)
+        if movie_count[0] == 0:
+            movie_query = """INSERT INTO MOVIES
+                            (NAME, DIRECTOR, POPULARITY, IMDB_SCORE) 
+                            VALUES 
+                            (:name, :director, :popularity, :imdb_score)
+                            """
+            await app.db.execute_many(movie_query, movie_list)
+
+        await load_genres(genre)
+        await match_movie_genre(movie_name)
+
+    except Exception as e:
+        print(str(e))
 
 
 @app.listener('after_server_start')

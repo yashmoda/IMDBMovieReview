@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="19f538e5-f010-488f-9212-f5149a268d0e" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/movies.db" beforeDir="false" afterPath="$PROJECT_DIR$/movies.db" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -27,8 +26,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/app/main.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="500">
-                  <caret line="187" column="51" selection-start-line="187" selection-start-column="51" selection-end-line="187" selection-end-column="51" />
+                <state relative-caret-position="614">
+                  <caret line="222" column="75" selection-start-line="222" selection-start-column="75" selection-end-line="222" selection-end-column="75" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                     <element signature="e#4930#5687#0" />
@@ -40,8 +39,8 @@
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/movies.db">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="294">
-                  <caret line="133" column="4097" selection-start-line="133" selection-start-column="4097" selection-end-line="133" selection-end-column="4097" />
+                <state relative-caret-position="339">
+                  <caret line="136" column="4097" selection-start-line="136" selection-start-column="4097" selection-end-line="136" selection-end-column="4097" />
                 </state>
               </provider>
             </entry>
@@ -53,8 +52,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/imdb.json">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="30">
-                  <caret line="2" selection-start-line="2" selection-end-line="21" selection-end-column="6" />
+                <state relative-caret-position="495">
+                  <caret line="33" column="22" selection-start-line="33" selection-start-column="22" selection-end-line="33" selection-end-column="22" />
                 </state>
               </provider>
             </entry>
@@ -179,17 +178,10 @@
     <entry file="file://$PROJECT_DIR$/app/settings.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/imdb.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" selection-start-line="2" selection-end-line="21" selection-end-column="6" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/movies.db">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="294">
-          <caret line="133" column="4097" selection-start-line="133" selection-start-column="4097" selection-end-line="133" selection-end-column="4097" />
+        <state relative-caret-position="339">
+          <caret line="136" column="4097" selection-start-line="136" selection-start-column="4097" selection-end-line="136" selection-end-column="4097" />
         </state>
       </provider>
     </entry>
@@ -200,10 +192,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/imdb.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="33" column="22" selection-start-line="33" selection-start-column="22" selection-end-line="33" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="500">
-          <caret line="187" column="51" selection-start-line="187" selection-start-column="51" selection-end-line="187" selection-end-column="51" />
+        <state relative-caret-position="614">
+          <caret line="222" column="75" selection-start-line="222" selection-start-column="75" selection-end-line="222" selection-end-column="75" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
             <element signature="e#4930#5687#0" />

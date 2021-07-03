@@ -200,6 +200,35 @@ async def add_movie(request):
         print(str(e))
         return response.text(str(e))
 
+
+@app.route("/delete/", methods=["DELETE"])
+async def delete_movie(request):
+    try:
+        username = request.args.get("username")
+        print(username)
+        if await is_admin(username):
+            name = request.args.get("name")
+            print(name)
+            movie_id_query = """SELECT ID FROM MOVIES WHERE name = :name """
+            movie_id = await app.db.fetch_one(movie_id_query, values={"name": name})
+            movie_id = movie_id[0]
+
+            print(movie_id)
+
+            movie_genre_query = """DELETE FROM MOVIE_GENRE WHERE MOVIE_ID = :id """
+            await app.db.execute(movie_genre_query, values={"id": movie_id})
+
+            movie_query = """DELETE FROM MOVIES WHERE ID = :id """
+            await app.db.execute(movie_query, values={"id": movie_id})
+
+            return response.text("The movie has been successfully deleted!!")
+        else:
+            return response.text("You are not an admin!! Only an admin can delete a movie.")
+    except Exception as e:
+        print(str(e))
+        return response.text("An error has occurred. Please try again later")
+
+
 @app.route("/add_user/", methods=["POST"])
 async def add_user(request):
     try:
@@ -239,5 +268,6 @@ async def insert_movie(movie):
                     """
     await app.db.execute(movie_query, movie)
     # print(movie)
+
 
 app.run(host="0.0.0.0", port=8000, debug=True)

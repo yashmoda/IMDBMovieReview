@@ -144,9 +144,36 @@ async def disconnect_from_db(*args, **kwargs):
     await app.db.disconnect()
 
 
-@app.route("/")
-def run(request):
-    return response.text("Hello World !")
+@app.route("/", methods=["GET"])
+async def get_reviews(request):
+    query = request.args.get("query")
+    search_query = """SELECT M.ID, M.NAME, M.DIRECTOR, M.IMDB_SCORE, M.POPULARITY, G.GENRE
+                        FROM MOVIES M
+                        INNER JOIN MOVIE_GENRE MG
+                            ON M.ID = MG.MOVIE_ID
+                        INNER JOIN GENRE G
+                            ON G.ID = MG.GENRE_ID
+                        WHERE M.NAME LIKE :name"""
+    result = await app.db.fetch_all(search_query, values={"name": "%{}%".format(query)})
+    response_val = {}
+    for row in result:
+        if row[0] not in response_val:
+            response_val[row[0]] = {}
+        if 'name' not in response_val[row[0]]:
+            response_val[row[0]]['name'] = row[1]
+        if 'director' not in response_val[row[0]]:
+            response_val[row[0]]['director'] = row[2]
+        if 'imdb_score' not in response_val[row[0]]:
+            response_val[row[0]]['imdb_score'] = row[3]
+        if 'popularity' not in response_val[row[0]]:
+            response_val[row[0]]['popularity'] = row[4]
+        if 'genre' not in response_val[row[0]]:
+            response_val[row[0]]['genre'] = [row[5]]
+        else:
+            if row[5] not in response_val[row[0]]['genre']:
+                response_val[row[0]]['genre'].append(row[5])
+
+    return response.json(response_val)
 
 
 async def is_admin(username):
